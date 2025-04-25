@@ -1,0 +1,69 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Accueil | Veille Procédurale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background-color: #f8f9fa;
+        padding: 4rem 0;
+        margin-bottom: 2rem;
+    }
+    .feature-card {
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container text-center">
+        {% if user.is_authenticated %}
+            <h1 class="display-4 mb-4">Bienvenue dans votre espace de gestion des procédures</h1>
+            <p class="lead mb-4">Créez, gérez et partagez les procédures de travail efficacement</p>
+            <a href="{% url 'procedures:create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Créer une nouvelle procédure
+            </a>
+        {% else %}
+            <h1 class="display-4 mb-4">Veille Procédurale</h1>
+            <p class="lead mb-4">Connectez-vous pour accéder à vos procédures de travail</p>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-card bg-white">
+                <i class="fas fa-pencil-alt fa-2x text-primary mb-3"></i>
+                <h3>Création Simple</h3>
+                <p>Créez facilement des procédures avec un éditeur BPMN intuitif.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card bg-white">
+                <i class="fas fa-share-alt fa-2x text-primary mb-3"></i>
+                <h3>Partage Facile</h3>
+                <p>Partagez vos procédures avec votre équipe en quelques clics.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card bg-white">
+                <i class="fas fa-history fa-2x text-primary mb-3"></i>
+                <h3>Gestion des Versions</h3>
+                <p>Suivez l'évolution de vos procédures avec l'historique des versions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

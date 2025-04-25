@@ -1,0 +1,252 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Manuel des Procédures | Veille Procédurale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .procedures-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    .procedure-card {
+        height: 100%;
+        transition: all 0.3s ease;
+        border: none;
+        background: white;
+    }
+    .procedure-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 1.5rem;
+    }
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #1a237e;
+    }
+    .card-text {
+        flex-grow: 1;
+        margin-bottom: 1rem;
+        color: #6c757d;
+    }
+    .card-footer {
+        background: transparent;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 1.5rem;
+    }
+    .info-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+    .info-group i {
+        width: 16px;
+        color: #1a237e;
+    }
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .action-group .btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+    }
+    .search-bar {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+    .search-input {
+        border-radius: 50px;
+        padding-left: 1rem;
+        padding-right: 3rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.15);
+        border-color: #1a237e;
+    }
+    .search-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        border: none;
+        background: transparent;
+        padding: 0 1rem;
+        color: #6c757d;
+        transition: color 0.3s ease;
+    }
+    .search-btn:hover {
+        color: #1a237e;
+    }
+    .procedures-counter {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .procedures-counter strong {
+        color: #1a237e;
+    }
+    .search-container h1 {
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="procedures-container">
+    <div class="search-bar">
+        <h1 class="mb-4">Manuel des Procédures</h1>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="position-relative">
+                    <input type="text" 
+                           class="form-control search-input" 
+                           id="searchInput" 
+                           placeholder="Rechercher une procédure..."
+                           autocomplete="off">
+                    <button class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'procedures:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nouvelle Procédure
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="procedures-counter">
+        {% if procedures %}
+            <strong>{{ procedures.count }}</strong> Procédures trouvées
+        {% else %}
+            <strong>0</strong> Procédure trouvée
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        {% for procedure in procedures %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card procedure-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ procedure.title }}</h5>
+                    <p class="card-text">{{ procedure.description|truncatewords:30 }}</p>
+                    <div class="info-group">
+                        <i class="fas fa-user"></i>
+                        <span>{{ procedure.created_by.username }}</span>
+                    </div>
+                    <div class="info-group">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ procedure.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="action-group">
+                        <a href="{% url 'procedures:detail' procedure.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Voir
+                        </a>
+                        {% if user == procedure.created_by %}
+                        <a href="{% url 'procedures:edit' procedure.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal{{ procedure.id }}">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Modals -->
+    {% for procedure in procedures %}
+    <div class="modal fade" id="deleteModal{{ procedure.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Êtes-vous sûr de vouloir supprimer la procédure "{{ procedure.title }}" ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form method="post" action="{% url 'procedures:delete' procedure.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if procedures.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if procedures.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ procedures.previous_page_number }}">Précédent</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in procedures.paginator.page_range %}
+                    <li class="page-item {% if procedures.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+                
+                {% if procedures.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ procedures.next_page_number }}">Suivant</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const cards = document.querySelectorAll('.procedure-card');
+        
+        cards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const description = card.querySelector('.card-text:not(.text-muted)').textContent.toLowerCase();
+            
+            if (title.includes(searchText) || description.includes(searchText)) {
+                card.parentElement.style.display = '';
+            } else {
+                card.parentElement.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Succès | Veille Procédurale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-container {
+        width: 100%;
+        padding: 20px;
+    }
+    .success-icon {
+        font-size: 4rem;
+        color: #198754;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container success-container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-check-circle success-icon"></i>
+                    <h1 class="mb-4">Procédure enregistrée avec succès !</h1>
+                    <p class="text-muted mb-4">Votre procédure a été créée et enregistrée dans le système.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'procedures:create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Créer une autre procédure
+                        </a>
+                        <a href="{% url 'procedures:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>Voir la liste
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

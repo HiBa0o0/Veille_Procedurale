@@ -1,0 +1,325 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Créer une procédure | Veille Procédurale{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@10.0.0/dist/assets/bpmn-js.css">
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@10.0.0/dist/assets/diagram-js.css">
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@10.0.0/dist/assets/bpmn-font/css/bpmn.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .canvas-container {
+        margin: 1.5rem 0;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        position: relative;
+        height: 600px;
+    }
+    #canvas {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+    }
+    .form-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .title {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-selection__choice {
+        background-color: #1a237e !important;
+        color: white !important;
+        border: none !important;
+        padding: 2px 8px !important;
+    }
+    .select2-selection__choice__remove {
+        color: white !important;
+        margin-right: 5px !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid #dee2e6;
+        min-height: 45px !important;
+        max-height: 80px;
+        overflow-y: auto;
+    }
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px;
+    }
+    .select2-container--bootstrap-5 .select2-selection__choice {
+        background-color: #e3f2fd !important;
+        color: #1a237e !important;
+        border: 1px solid #90caf9 !important;
+        border-radius: 4px !important;
+        padding: 2px 8px !important;
+        margin: 2px !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 0.875rem !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection__choice__remove {
+        position: relative !important;
+        color: #1a237e !important;
+        margin-right: 6px !important;
+        padding: 0 4px !important;
+        border: none !important;
+        background: transparent !important;
+        opacity: 0.7;
+        font-size: 14px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection__choice__remove:hover {
+        background: rgba(26, 35, 126, 0.1) !important;
+        opacity: 1;
+        border-radius: 2px;
+    }
+    .select2-container--bootstrap-5 .select2-selection__choice__remove::after {
+        content: '✕';
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-color: #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 6px 12px;
+        font-size: 0.875rem;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: #e3f2fd !important;
+        color: #1a237e !important;
+    }
+    .select2-container--bootstrap-5 .select2-search__field {
+        margin-top: 0 !important;
+        padding: 4px 8px !important;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #90caf9;
+        box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.15);
+    }
+    .form-label {
+        color: #1a237e;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+    #title {
+        height: 45px;
+        font-size: 1rem;
+        padding-left: 1rem;
+    }
+    #description {
+        padding: 1rem;
+        line-height: 1.5;
+    }
+    .btn-group {
+        margin-top: 2rem;
+        gap: 0.5rem;
+    }
+    .btn-group .btn {
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #1a237e;
+        border-color: #1a237e;
+    }
+    .btn-primary:hover {
+        background-color: #283593;
+        border-color: #283593;
+    }
+</style>
+<script src="https://unpkg.com/bpmn-js@10.0.0/dist/bpmn-modeler.development.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    
+    <h1 class="title">Créer une nouvelle procédure</h1>
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="title" class="form-label">Titre</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+            <div class="invalid-feedback">
+                Veuillez entrer un titre pour la procédure.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"  required></textarea>
+            <div class="invalid-feedback">
+                Veuillez entrer une description pour la procédure.
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Utilisateurs concernés</span>
+                <small class="text-muted">Sélectionnez les personnes concernées par cette procédure</small>
+            </label>
+            <select class="form-select users-select" name="concerned_users" multiple data-placeholder="Sélectionnez les utilisateurs...">
+                {% for user in users %}
+                <option value="{{ user.id }}">
+                    {{ user.get_full_name|default:user.username }}
+                </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">
+                <i class="fas fa-info-circle me-1"></i>
+                Vous pouvez rechercher et sélectionner plusieurs utilisateurs
+            </div>
+        </div>
+
+        <label class="form-label">Diagramme BPMN de la procedure</label>
+
+        <div class="canvas-container">
+            <div id="canvas"></div>
+            <input type="hidden" name="bpmn_diagram" id="bpmn_diagram">
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary" onclick="return saveDiagram()">
+                <i class="fas fa-save me-2"></i>Enregistrer
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="resetDiagram()">
+                <i class="fas fa-undo me-2"></i>Réinitialiser
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/bpmn-js@10.0.0/dist/bpmn-modeler.development.js"></script>
+<script>
+    // Initialize BPMN modeler
+    const container = document.getElementById('canvas');
+    const bpmnModeler = new BpmnJS({
+        container: container,
+        keyboard: {
+            bindTo: document
+        }
+    });
+
+    // Empty BPMN diagram template with a start event
+    const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+    <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                      xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                      xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                      xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                      id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+      <bpmn:process id="Process_1" isExecutable="false">
+        <bpmn:startEvent id="StartEvent_1"/>
+      </bpmn:process>
+      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+          <bpmndi:BPMNShape id="_BPMNShape_StartEvent_1" bpmnElement="StartEvent_1">
+            <dc:Bounds x="152" y="102" width="36" height="36"/>
+          </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+      </bpmndi:BPMNDiagram>
+    </bpmn:definitions>`;
+
+    // Initialize the diagram
+    async function initDiagram() {
+        try {
+            await bpmnModeler.importXML(emptyDiagram);
+            // Zoom to fit full viewport
+            const canvas = bpmnModeler.get('canvas');
+            canvas.zoom('fit-viewport');
+        } catch (err) {
+            console.error('Error loading diagram:', err);
+        }
+    }
+
+    // Call initialization
+    initDiagram();
+
+    // Form validation and submission
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        if (await saveDiagram()) {
+            form.submit();
+        }
+    });
+
+    // Save diagram
+    async function saveDiagram() {
+        try {
+            const { xml } = await bpmnModeler.saveXML({ format: true });
+            document.getElementById('bpmn_diagram').value = xml;
+            return true;
+        } catch (err) {
+            console.error('Error saving diagram:', err);
+            alert('Une erreur est survenue lors de la sauvegarde du diagramme');
+            return false;
+        }
+    }
+
+    // Reset diagram
+    function resetDiagram() {
+        if (confirm('Êtes-vous sûr de vouloir réinitialiser le diagramme ?')) {
+            initDiagram();
+            form.reset();
+            form.classList.remove('was-validated');
+        }
+    }
+</script>
+<!-- Après les scripts existants -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/fr.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.users-select').select2({
+            theme: 'bootstrap-5',
+            language: 'fr',
+            placeholder: 'Sélectionnez les utilisateurs concernés',
+            allowClear: true,
+            closeOnSelect: false,
+            width: '100%',
+            minimumResultsForSearch: 0,
+            templateSelection: function(data) {
+                if (!data.id) return data.text;
+                return $('<span><i class="fas fa-user me-2"></i>' + data.text + '</span>');
+            },
+            templateResult: function(data) {
+                if (!data.id) return data.text;
+                return $('<span><i class="fas fa-user me-2"></i>' + data.text + '</span>');
+            }
+        });
+    });
+</script>
+{% endblock %}
