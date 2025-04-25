@@ -107,6 +107,20 @@
         color: #1a237e;
         margin-right: 0.5rem;
     }
+
+    .activities-section {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .table th {
+        font-weight: 500;
+        color: #1a237e;
+    }
+    .table td {
+        vertical-align: middle;
+    }
 </style>
 {% endblock %}
 
@@ -187,6 +201,53 @@
         </div>
         <div class="col-md-8">
             <div class="diagram-container" id="canvas"></div>
+
+            <div class="activities-section mt-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-tasks me-2"></i>
+                    Liste des activités
+                </h4>
+                
+                {% if procedure.activities.exists %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom de l'activité</th>
+                                <th>Description</th>
+                                <th>Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in procedure.activities.all %}
+                            <tr>
+                                <td>{{ activity.name }}</td>
+                                <td>
+                                    {% if activity.description %}
+                                        {{ activity.description }}
+                                    {% else %}
+                                        <span class="text-muted">Aucune description</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if activity.responsible %}
+                                        {{ activity.responsible.get_full_name|default:activity.responsible.username }}
+                                    {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Aucune activité n'a été définie pour cette procédure.
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

@@ -213,6 +213,8 @@
             <input type="hidden" name="bpmn_diagram" id="bpmn_diagram" value="{{ procedure.bpmn_diagram }}">
         </div>
 
+        <input type="hidden" name="activity_details" id="activity_details" value="{}">
+
         <div class="btn-group">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save me-2"></i>Enregistrer les modifications
@@ -220,6 +222,40 @@
             <a href="{% url 'procedures:detail' procedure.id %}" class="btn btn-secondary">
                 <i class="fas fa-times me-2"></i>Annuler
             </a>
+        </div>
+
+        <div class="modal fade" id="activityDetailsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Détails de l'activité</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nom de l'activité <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="activityName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description (optionnelle)</label>
+                            <textarea class="form-control" id="activityDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Responsable (optionnel)</label>
+                            <select class="form-select" id="activityResponsible">
+                                <option value="">Sélectionner un responsable</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="saveActivityDetails">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
 </div>
@@ -235,6 +271,85 @@
         keyboard: {
             bindTo: document
         }
+    });
+
+    // Add this after bpmnModeler initialization
+    let activityDetails = {
+        {% for activity in procedure.activities.all %}
+            "{{ activity.activity_id|escapejs }}": {
+                name: "{{ activity.name|escapejs }}",
+                description: "{{ activity.description|default:''|escapejs }}",
+                responsible: "{{ activity.responsible.id|default:'' }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    let currentActivityId = null;
+
+    // Add double-click event listener for diagram elements
+    bpmnModeler.on('element.dblclick', function(event) {
+        const element = event.element;
+        
+        // Only show modal for tasks/activities
+        if (element.type.includes('Task') || element.type.includes('Activity')) {
+            currentActivityId = element.id;
+            showActivityModal(element);
+        }
+    });
+
+    bpmnModeler.on('shape.remove', function(event) {
+        const element = event.element;
+        if (element.type.includes('Task') || element.type.includes('Activity')) {
+            // Remove activity details when shape is deleted
+            if (activityDetails[element.id]) {
+                delete activityDetails[element.id];
+                // Update hidden input
+                document.getElementById('activity_details').value = JSON.stringify(activityDetails);
+            }
+        }
+    });
+
+    function showActivityModal(element) {
+        const modalElement = document.getElementById('activityDetailsModal');
+        const modal = new bootstrap.Modal(modalElement);
+        const details = activityDetails[element.id] || {};
+        
+        // Fill in existing details if any
+        document.getElementById('activityName').value = details.name || element.businessObject.name || '';
+        document.getElementById('activityDescription').value = details.description || '';
+        document.getElementById('activityResponsible').value = details.responsible || '';
+        
+        modal.show();
+    }
+
+    // Save activity details
+    document.getElementById('saveActivityDetails').addEventListener('click', function() {
+        if (!currentActivityId) return;
+
+        const name = document.getElementById('activityName').value.trim();
+        if (!name) {
+            alert('Le nom de l\'activité est obligatoire');
+            return;
+        }
+
+        const details = {
+            name: name,
+            description: document.getElementById('activityDescription').value.trim(),
+            responsible: document.getElementById('activityResponsible').value
+        };
+
+        // Update activity details
+        activityDetails[currentActivityId] = details;
+        
+        // Update the activity name in the diagram
+        const modeling = bpmnModeler.get('modeling');
+        const element = bpmnModeler.get('elementRegistry').get(currentActivityId);
+        modeling.updateLabel(element, details.name);
+
+        // Store all details in the hidden input
+        document.getElementById('activity_details').value = JSON.stringify(activityDetails);
+
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('activityDetailsModal')).hide();
     });
 
     // Form validation and submission
@@ -257,12 +372,44 @@
             return;
         }
 
-        // Save diagram and submit
-        if (await saveDiagram()) {
+        try {
+            // Get current BPMN XML
+            const { xml } = await bpmnModeler.saveXML({ format: true });
+            document.getElementById('bpmn_diagram').value = xml;
+
+            // Get all current tasks/activities from the diagram
+            const elementRegistry = bpmnModeler.get('elementRegistry');
+            const currentActivities = elementRegistry.filter(element => 
+                element.type.includes('Task') || element.type.includes('Activity')
+            );
+
+            // Keep existing activity details for activities still in diagram
+            const updatedActivityDetails = {};
+            currentActivities.forEach(activity => {
+                if (activityDetails[activity.id]) {
+                    // Keep existing details
+                    updatedActivityDetails[activity.id] = activityDetails[activity.id];
+                } else {
+                    // Add basic details for activities without stored details
+                    updatedActivityDetails[activity.id] = {
+                        name: activity.businessObject.name || '',
+                        description: '',
+                        responsible: ''
+                    };
+                }
+            });
+
+            // Update the hidden input with final activity details
+            document.getElementById('activity_details').value = JSON.stringify(updatedActivityDetails);
+
+            // Submit the form
             const submitBtn = this.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
             form.submit();
+        } catch (error) {
+            console.error('Error processing form:', error);
+            alert('Une erreur est survenue lors du traitement du formulaire');
         }
     });
 
@@ -284,6 +431,33 @@
         try {
             const { xml } = await bpmnModeler.saveXML({ format: true });
             document.getElementById('bpmn_diagram').value = xml;
+
+            // Get current activities from diagram
+            const elementRegistry = bpmnModeler.get('elementRegistry');
+            const activities = elementRegistry.filter(element => 
+                element.type.includes('Task') || element.type.includes('Activity')
+            );
+
+            // Sync activityDetails with current diagram state
+            activities.forEach(activity => {
+                if (!activityDetails[activity.id] && activity.businessObject.name) {
+                    activityDetails[activity.id] = {
+                        name: activity.businessObject.name,
+                        description: '',
+                        responsible: ''
+                    };
+                }
+            });
+
+            // Remove details of deleted activities
+            Object.keys(activityDetails).forEach(id => {
+                if (!elementRegistry.get(id)) {
+                    delete activityDetails[id];
+                }
+            });
+
+            // Update hidden input
+            document.getElementById('activity_details').value = JSON.stringify(activityDetails);
             return true;
         } catch (err) {
             console.error('Error saving diagram:', err);

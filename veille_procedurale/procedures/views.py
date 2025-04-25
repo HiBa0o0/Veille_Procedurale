@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Procedure , ProcedureRevision
+from .models import Procedure, ProcedureRevision, ActivityDetail
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.contrib import messages
 from django.core.paginator import Paginator
+import json
 
 @login_required
 def create_procedure(request):
@@ -21,6 +22,18 @@ def create_procedure(request):
             created_by=request.user
         )
         procedure.concerned_users.set(concerned_users)
+
+        # Save activity details
+        activity_details = json.loads(request.POST.get('activity_details', '{}'))
+        for activity_id, details in activity_details.items():
+            ActivityDetail.objects.create(
+                procedure=procedure,
+                activity_id=activity_id,
+                name=details['name'],
+                description=details['description'],
+                responsible_id=details['responsible'],
+            )
+
         return redirect('procedures:procedure_success')
 
     users = User.objects.exclude(id=request.user.id)
@@ -65,7 +78,7 @@ def procedure_edit(request, pk):
             })
 
         try:
-            # Create revision with current state before updating
+            # Create revision with current state
             ProcedureRevision.objects.create(
                 procedure=procedure,
                 version=procedure.revisions.count() + 1,
@@ -81,6 +94,23 @@ def procedure_edit(request, pk):
             procedure.description = request.POST.get('description')
             procedure.bpmn_diagram = request.POST.get('bpmn_diagram')
             procedure.concerned_users.set(request.POST.getlist('concerned_users'))
+            
+            # Update activity details
+            activity_details = json.loads(request.POST.get('activity_details', '{}'))
+            
+            # Delete existing activities
+            procedure.activities.all().delete()
+            
+            # Create new activities
+            for activity_id, details in activity_details.items():
+                ActivityDetail.objects.create(
+                    procedure=procedure,
+                    activity_id=activity_id,
+                    name=details['name'],
+                    description=details.get('description', ''),
+                    responsible_id=details.get('responsible')
+                )
+            
             procedure.save()
 
             messages.success(request, "Procédure mise à jour avec succès.")
