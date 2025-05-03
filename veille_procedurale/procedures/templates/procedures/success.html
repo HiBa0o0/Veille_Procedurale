@@ -13,6 +13,18 @@
         color: #198754;
         margin-bottom: 1.5rem;
     }
+    .btn-primary {
+            background-color: #1a237e;
+        }
+    .btn-primary:hover {
+            background-color: white;
+            color: #1a237e;
+            border-color: #1a237e;
+        }
+    .fa-check-circle {
+        font-size: 4rem;
+        color: #4caf50;
+    }
 </style>
 {% endblock %}
 
@@ -30,7 +42,7 @@
                             <i class="fas fa-plus me-2"></i>Créer une autre procédure
                         </a>
                         <a href="{% url 'procedures:list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-list me-2"></i>Voir la liste
+                            <i class="fas fa-list me-2"></i>Voir le manuel
                         </a>
                     </div>
                 </div>

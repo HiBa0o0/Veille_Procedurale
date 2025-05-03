@@ -1,0 +1,143 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Signer la procédure{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.css">
+<style>
+    .signature-container {
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        margin: 20px 0;
+        position: relative;
+        width: 100%;
+        height: 300px;
+        background-color: #fff;
+    }
+    #signaturePad {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .btn-group {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .btn-cancel {
+        color: #6c757d;
+        background-color: transparent;
+        border-color: #6c757d;
+    }
+    .btn-cancel:hover {
+        color: #fff;
+        background-color: #6c757d;
+        border-color: #6c757d;
+        transform: translateY(-2px);
+    }
+    .btn-secondary:hover {
+        background-color: white;
+        color: #6c757d;
+        border-color: #6c757d;
+        transform: translateY(-2px);
+    }
+    .btn-primary:hover {
+        background-color: white;
+        color: #1a237e;
+        border-color: #1a237e;
+        transform: translateY(-2px);
+    }
+    .btn-primary {
+        background-color: #1a237e;
+        border-color: #1a237e;
+    }
+    .title {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="title mb-4">Signature de la procédure</h3>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        En signant ce document, vous attestez avoir lu et compris la procédure "{{ procedure.title }}".
+                    </div>
+
+                    <form method="post" id="signatureForm">
+                        {% csrf_token %}
+                        <div class="signature-container">
+                            <canvas id="signaturePad"></canvas>
+                        </div>
+                        <input type="hidden" name="signature_data" id="signatureData">
+                        
+                        <div class="btn-group">
+                            <a href="{% url 'procedures:my_procedures' %}" class="btn btn-cancel">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            <button type="button" class="btn btn-secondary" id="clearSignature">
+                                <i class="fas fa-eraser me-2"></i>Effacer
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveSignature">
+                                <i class="fas fa-signature me-2"></i>Signer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+    function resizeCanvas() {
+        const canvas = document.getElementById('signaturePad');
+        const container = canvas.parentElement;
+        
+        // Set canvas size to match container
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+
+    // Initialize signature pad after resizing canvas
+    window.onload = function() {
+        resizeCanvas();
+        const canvas = document.getElementById('signaturePad');
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+        
+        // Clear signature handler
+        document.getElementById('clearSignature').addEventListener('click', function() {
+            signaturePad.clear();
+        });
+        
+        // Form submission handler
+        document.getElementById('signatureForm').addEventListener('submit', function(e) {
+            if (signaturePad.isEmpty()) {
+                e.preventDefault();
+                alert('Veuillez signer avant de soumettre.');
+                return false;
+            }
+            
+            document.getElementById('signatureData').value = signaturePad.toDataURL();
+        });
+    };
+
+    // Resize canvas when window is resized
+    window.onresize = resizeCanvas;
+</script>
+{% endblock %}

@@ -5,65 +5,184 @@
 {% block extra_css %}
 <style>
     .hero-section {
-        background-color: #f8f9fa;
+        background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+        color: white;
         padding: 4rem 0;
+        margin-bottom: 3rem;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
         margin-bottom: 2rem;
     }
+
     .feature-card {
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
         height: 100%;
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.08);
     }
+
     .feature-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #1a237e;
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-section {
+        background-color: #f8f9fa;
+        padding: 4rem 0;
+        margin: 3rem 0;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .cta-section {
+        background-color: #e8eaf6;
+        padding: 4rem 0;
+        text-align: center;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="hero-section">
+<!-- Hero Section -->
+<section class="hero-section">
     <div class="container text-center">
+        <h1 class="hero-title">Bienvenue sur Veille Procédurale</h1>
+        <p class="hero-subtitle">
+            La plateforme de gestion des procédures de travail au sein de l'ESI, conçue pour simplifier 
+            le suivi et l'application des procédures de travail.
+        </p>
         {% if user.is_authenticated %}
-            <h1 class="display-4 mb-4">Bienvenue dans votre espace de gestion des procédures</h1>
-            <p class="lead mb-4">Créez, gérez et partagez les procédures de travail efficacement</p>
-            <a href="{% url 'procedures:create' %}" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus me-2"></i>Créer une nouvelle procédure
-            </a>
+            {% if user.profile.is_quality_cell %}
+                <a href="{% url 'procedures:create' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus me-2"></i>Créer une procédure
+                </a>
+            {% else %}
+                <a href="{% url 'procedures:my_procedures' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-book me-2"></i>Voir mes procédures
+                </a>
+            {% endif %}
         {% else %}
-            <h1 class="display-4 mb-4">Veille Procédurale</h1>
-            <p class="lead mb-4">Connectez-vous pour accéder à vos procédures de travail</p>
-            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+            <a href="{% url 'login' %}" class="btn btn-light btn-lg">
                 <i class="fas fa-sign-in-alt me-2"></i>Se connecter
             </a>
         {% endif %}
     </div>
-</div>
+</section>
 
-<div class="container mb-5">
+<!-- Features Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Nos Fonctionnalités</h2>
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="feature-card bg-white">
-                <i class="fas fa-pencil-alt fa-2x text-primary mb-3"></i>
-                <h3>Création Simple</h3>
-                <p>Créez facilement des procédures avec un éditeur BPMN intuitif.</p>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Gestion Simple</h3>
+                <p>Créez, modifiez et gérez facilement vos procédures avec notre interface intuitive.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="feature-card bg-white">
-                <i class="fas fa-share-alt fa-2x text-primary mb-3"></i>
-                <h3>Partage Facile</h3>
-                <p>Partagez vos procédures avec votre équipe en quelques clics.</p>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Collaboration</h3>
+                <p>Partagez les procédures avec les équipes concernées et suivez leur progression.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="feature-card bg-white">
-                <i class="fas fa-history fa-2x text-primary mb-3"></i>
-                <h3>Gestion des Versions</h3>
-                <p>Suivez l'évolution de vos procédures avec l'historique des versions.</p>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3>Notifications</h3>
+                <p>Restez informé des nouvelles procédures et des mises à jour importantes.</p>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Statistics Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            {% if user.is_authenticated %}
+                {% if user.profile.is_quality_cell %}
+                    <!--div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ total_procedures }}</div>
+                            <div class="stat-label">Procédures Totales</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ active_users }}</div>
+                            <div class="stat-label">Utilisateurs Actifs</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ signed_procedures }}</div>
+                            <div class="stat-label">Procédures Signées</div>
+                        </div>
+                    </div-->
+                {% else %}
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ total_procedures }}</div>
+                            <div class="stat-label">Mes Procédures</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ read_procedures }}</div>
+                            <div class="stat-label">Procédures Lues</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">{{ signed_procedures }}</div>
+                            <div class="stat-label">Procédures Signées</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+
 {% endblock %}

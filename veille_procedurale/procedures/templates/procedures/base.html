@@ -51,12 +51,77 @@
             border-radius: 4px;
         }
 
+        .navbar-nav {
+            gap: 0.2rem;  
+        }
+
+        .nav-item {
+            margin: 0 0.25rem; 
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem !important;  
+            border-radius: 6px;  
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-1px);  /* Léger effet de soulèvement */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* Ombre au survol */
+        }
+
+        .btn-link.nav-link {
+            margin: 0;  /* Reset des marges pour le bouton */
+            padding: 0.5rem 1rem !important;  /* Même padding que les autres liens */
+        }
+
         .main-content {
             min-height: calc(100vh - 160px);
         }
+
+        .badge.bg-danger {
+            background-color: #ff3d3d !important;  /* Plus vif que le rouge par défaut */
+            border-radius: 50%;  /* Parfaitement rond */
+            min-width: 20px;  /* Largeur minimale */
+            height: 20px;  /* Hauteur fixe */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;  /* Padding horizontal */
+            font-size: 0.75rem;  /* Taille de police plus petite */
+            position: absolute;  /* Position absolue */
+            top: -5px;  /* Décalage vers le haut */
+            right: -8px;  /* Décalage vers la droite */
+        }
+
+        .nav-link {
+            position: relative;  /* Pour le positionnement du badge */
+        }
+
+        footer {
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        footer h6 {
+            color: #1a237e;
+            font-weight: 600;
+        }
+
+        footer .small {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        footer img {
+            height: 100px; 
+            width: auto;
+            margin-bottom: 1rem;
+        }
+
     </style>
 </head>
 <body>
+    {% load procedure_tags %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
@@ -70,29 +135,52 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Accueil</a>
-                    </li>
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'procedures:create' %}">Nouvelle Procédure</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'procedures:list' %}">Manuel des Procédures</a>
-                    </li>
-                    <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}" class="nav-link" style="margin:0; padding:0;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-link nav-link" style="border:none;">
-                                <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
-                            </button>
-                        </form>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">
-                            <i class="fas fa-sign-in-alt me-1"></i>Connexion
+                        <a class="nav-link" href="{% url 'home' %}">
+                            <i class="fas fa-home me-1"></i>Accueil
                         </a>
                     </li>
+                    {% if user.is_authenticated %}
+                        {% if user.profile.is_quality_cell %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'procedures:create' %}">
+                                    <i class="fas fa-plus  me-1"></i>Nouvelle Procédure
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'procedures:list' %}">
+                                    <i class="fas fa-book me-1"></i>Manuel des Procédures
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'procedures:my_procedures' %}">
+                                    <i class="fas fa-book me-1 me-1"></i>Mon Manuel
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'procedures:notifications' %}">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    {% get_unread_notifications_count user as unread_count %}
+                                    {% if unread_count > 0 %}
+                                        <span class="badge bg-danger">{{ unread_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link nav-link">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+                                </button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Connexion
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
@@ -103,9 +191,21 @@
         {% block content %}{% endblock %}
     </div>
 
-    <footer class="bg-light py-4">
-        <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Veille Procédurale. Tous droits réservés.</p>
+    <footer class="bg-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <h6 class="mb-2">École nationale Supérieure d'Informatique</h6>
+                    <h6 class="mb-3" style="font-family: 'Traditional Arabic', Arial;">المدرسة الوطنية العليا للإعلام الآلي</h6>
+                    <p class="mb-1 small">BP.M68 16270, Oued Smar, Alger</p>
+                    <p class="mb-1 small">Tél : 023939132 - Fax : 023939142</p>
+                    <a href="http://www.esi.dz" class="text-decoration-none small" style="color: #1a237e;">www.esi.dz</a>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <img src="{% static 'images/esi-logo.png' %}" alt="ESI Logo" class="mb-2 img">
+                    <p class="small text-muted mt-2">&copy; {% now "Y" %} Veille Procédurale. Tous droits réservés.</p>
+                </div>
+            </div>
         </div>
     </footer>
 

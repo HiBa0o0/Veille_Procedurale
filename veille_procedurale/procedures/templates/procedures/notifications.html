@@ -1,0 +1,66 @@
+{% extends 'procedures/base.html' %}
+
+{% block title %}Notifications | Veille Procédurale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .notification-item {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease;
+    }
+    .notification-item:hover {
+        transform: translateX(5px);
+    }
+    .notification-new {
+        border-left: 4px solid #1a237e;
+    }
+    .notification-update {
+        border-left: 4px solid #2196f3;
+    }
+    .notification-meta {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    .title {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="title">Notifications</h1>
+    
+    <div class="notification-list">
+        {% for notification in notifications %}
+            <div class="notification-item notification-{{ notification.notification_type }}">
+                <div class="notification-content">
+                    {{ notification.message }}
+                    <div class="notification-meta">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ notification.created_at|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Vous n'avez aucune notification.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

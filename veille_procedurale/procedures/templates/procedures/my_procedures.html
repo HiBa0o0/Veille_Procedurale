@@ -1,0 +1,266 @@
+{% extends 'procedures/base.html' %}
+{% load procedure_tags %}
+
+{% block title %}Mon Manuel des procédures{% endblock %}
+
+{% block extra_css %}
+<style>
+    
+    .procedures-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    .procedure-card {
+        height: 100%;
+        transition: all 0.3s ease;
+        border: none;
+        background: white;
+    }
+    .procedure-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 1.5rem;
+    }
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #1a237e;
+    }
+    .card-text {
+        flex-grow: 1;
+        margin-bottom: 1rem;
+        color: #6c757d;
+    }
+    .card-footer {
+        background: transparent;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 1.5rem;
+    }
+    .info-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+    .info-group i {
+        width: 16px;
+        color: #1a237e;
+    }
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .action-group .btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+    }
+    .status-badge {
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .procedures-counter {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .procedures-counter strong {
+        color: #1a237e;
+    }
+    .title {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+    .search-bar {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+    .search-input {
+        border-radius: 50px;
+        padding-left: 1rem;
+        padding-right: 3rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.15);
+        border-color: #1a237e;
+    }
+    .search-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        border: none;
+        background: transparent;
+        padding: 0 1rem;
+        color: #6c757d;
+        transition: color 0.3s ease;
+    }
+    .search-btn:hover {
+        color: #1a237e;
+    }
+    .badge.bg-warning {
+        background-color: #ff9800 !important;
+        color: #fff;
+    }
+    .badge.bg-success {
+        background-color: #4caf50 !important;
+    }
+    .btn-outline-success {
+        color: #4caf50;
+        border-color: #4caf50;
+    }
+    .btn-outline-success:hover {
+        background-color: #4caf50;
+        color: white;
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="procedures-container">
+    <!--h1 class="title">Mon Manuel des procédures</h1-->
+    <div class="search-bar">
+        <h1 class="mb-4">Mon Manuel des procédures</h1>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="position-relative">
+                    <input type="text" 
+                           class="form-control search-input" 
+                           id="searchInput" 
+                           placeholder="Rechercher une procédure..."
+                           autocomplete="off">
+                    <button class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="procedures-counter">
+        {% if procedures %}
+            <strong>{{ procedures.count }}</strong> Procédures assignées
+        {% else %}
+            <strong>0</strong> Procédure assignée
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        {% for procedure in procedures %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card procedure-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ procedure.title }}</h5>
+                        {% with status=read_status|get_item:procedure.id %}
+                            {% if not status.is_read %}
+                                <span class="badge bg-warning status-badge">Non lu</span>
+                            {% elif not status.is_signed %}
+                                <span class="badge bg-info status-badge">Lu - À signer</span>
+                            {% else %}
+                                <span class="badge bg-success status-badge">Signé</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    
+                    <p class="card-text">{{ procedure.description|truncatewords:30 }}</p>
+                    
+                    <div class="info-group">
+                        <i class="fas fa-user"></i>
+                        <span>Créée par {{ procedure.created_by.get_full_name|default:procedure.created_by.username }}</span>
+                    </div>
+                    <div class="info-group">
+                        <i class="fas fa-calendar"></i>
+                        <span>Mise à jour le {{ procedure.updated_at|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="action-group">
+                        {% with status=read_status|get_item:procedure.id %}
+                            <a href="{% url 'procedures:detail' procedure.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Consulter
+                            </a>
+                            {% if not status.is_signed and status.is_read %}
+                                <!-- Read but not signed -->
+                                <a href="{% url 'procedures:mark_as_read' procedure.id %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-signature me-1"></i>Signer
+                                </a>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Vous n'avez aucune procédure assignée pour le moment.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const procedureCards = document.querySelectorAll('.procedure-card').length;
+    const counter = document.querySelector('.procedures-counter strong');
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        let visibleCount = 0;
+        
+        document.querySelectorAll('.procedure-card').forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const description = card.querySelector('.card-text').textContent.toLowerCase();
+            const creator = card.querySelector('.info-group span').textContent.toLowerCase();
+            
+            if (title.includes(searchTerm) || 
+                description.includes(searchTerm) || 
+                creator.includes(searchTerm)) {
+                card.closest('.col-md-6').style.display = '';
+                visibleCount++;
+            } else {
+                card.closest('.col-md-6').style.display = 'none';
+            }
+        });
+        
+        // Update counter
+        counter.textContent = visibleCount;
+    });
+
+    // Add clear search functionality
+    const searchBtn = document.querySelector('.search-btn');
+    searchBtn.addEventListener('click', function() {
+        if (searchInput.value) {
+            searchInput.value = '';
+            // Trigger the input event to reset the search
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    });
+});
+</script>
+{% endblock %}
